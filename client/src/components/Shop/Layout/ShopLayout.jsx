@@ -1,4 +1,10 @@
-import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { SlLogout } from "react-icons/sl";
 import { AiOutlineProduct } from "react-icons/ai";
 import { AiOutlineShoppingCart } from "react-icons/ai";
@@ -29,14 +35,14 @@ const ShopLayout = () => {
 
   const location = useLocation();
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const token = Cookies.get("token");
 
   const { isLoading, user } = useSelector((state) => state.auth);
   const {
     cart,
-    isUpdating : addTocartLoading,
+    isUpdating: addTocartLoading,
     isQuantityUpdateting,
     isRemoving,
     updatingItemId,
@@ -53,6 +59,7 @@ const ShopLayout = () => {
       setIsCartOpen(false);
       setSelectedItems({});
       setSelectedTotal(0);
+      setInputValues({});
     }
   };
 
@@ -82,7 +89,7 @@ const ShopLayout = () => {
   const handleUpdateQuantity = (productId, newQuantity) => {
     dispatch(updateCartItem({ productId, quantity: newQuantity, token })).then(
       () => {
-        if (selectedItems[productId]) {
+        if (selectedItems[productId] && selectedItems[productId].length > 0) {
           setSelectedTotal((prevTotal) => {
             const updatedItem = cart.items.find(
               (item) => item.product._id === productId
@@ -195,7 +202,9 @@ const ShopLayout = () => {
         to={item.to}
         className={({ isActive }) =>
           `block py-2 px-4 w-full ${
-            isActive ? "text-primary font-bold" : "hover:text-primary hover:underline"
+            isActive
+              ? "text-primary font-bold"
+              : "hover:text-primary hover:underline"
           }`
         }
       >
@@ -218,7 +227,7 @@ const ShopLayout = () => {
             to="/shop/products"
             className="text-2xl font-bold cursor-pointer text-primary"
           >
-            Logo
+            {"Logo"}
           </Link>
           <div className="lg:flex items-center space-x-2 hidden">
             <span className="text-gray-500">/</span>
@@ -229,17 +238,29 @@ const ShopLayout = () => {
         </div>
         {user ? (
           <div className="flex items-center gap-8">
-            <div className="relative cursor-pointer">
-              <IoCartOutline className="text-3xl" onClick={toggleCart} />
-              <span className="bg-primary text-white px-[4px] text-[12px] rounded-full absolute -top-1 left-5">
-                {addTocartLoading ? <AiOutlineLoading className="text-[1rem] py-[3px] animate-spin"/> : cart?.items?.length}
-              </span>
-              {isCartOpen && (
-                <div className="bg-slate-500 w-10 h-10 absolute -top-1 opacity-0"></div>
-              )}
-            </div>
+            {location.pathname !== "/shop/checkout" && location.pathname !== "/shop/payment" && (
+              <div className="relative cursor-pointer">
+                <IoCartOutline className="text-3xl" onClick={toggleCart} />
+                <span
+                  className="bg-primary text-white px-[4px] text-[12px] rounded-full absolute -top-1 left-5"
+                  onClick={toggleCart}
+                >
+                  {addTocartLoading ? (
+                    <AiOutlineLoading className="text-[1rem] py-[3px] animate-spin" />
+                  ) : (
+                    cart?.items?.length
+                  )}
+                </span>
+                {isCartOpen && (
+                  <div className="bg-slate-500 w-10 h-10 absolute -top-1 opacity-0"></div>
+                )}
+              </div>
+            )}
 
-            <div className="flex items-center gap-1 cursor-pointer" onClick={() => navigate("/shop/my-profile")}>
+            <div
+              className="flex items-center gap-1 cursor-pointer"
+              onClick={() => navigate("/shop/my-profile")}
+            >
               <img
                 src={
                   user.profilePicture?.url ||
@@ -249,7 +270,7 @@ const ShopLayout = () => {
                 }
                 alt={user.fullName}
                 width={35}
-                height={35} 
+                height={35}
                 className="rounded-full"
                 style={{ objectFit: "cover", aspectRatio: "1/1" }}
               />
@@ -289,6 +310,8 @@ const ShopLayout = () => {
         cartRef={cartRef}
         cart={cart}
         selectedItemsFK={selectedItems}
+        setSelectedItems={setSelectedItems}
+        setSelectedTotal={setSelectedTotal}
         handleSelectItem={handleSelectItem}
         handleRemoveFromCart={handleRemoveFromCart}
         handleUpdateQuantity={handleUpdateQuantity}

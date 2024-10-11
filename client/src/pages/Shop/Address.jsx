@@ -42,8 +42,6 @@ const Address = () => {
     error: addressError,
   } = useSelector((state) => state.address);
 
-  console.log("daftar alamat", addresses);
-
   const token = Cookies.get("token");
 
   useEffect(() => {
@@ -68,20 +66,19 @@ const Address = () => {
     dispatch(fetchProvinces())
       .unwrap()
       .catch((err) => {
-        alert(err.message || "Gagal mengambil provinsi");
+        console.log(err.message || "Gagal mengambil provinsi");
       });
 
     // Jika mode edit, fetch data alamat
     if (isEdit) {
-      const token = Cookies.get("token");
       if (token) {
         dispatch(getAddressById({ id: addressId, token }))
           .unwrap()
           .catch((err) => {
-            alert(err.message || "Gagal mengambil data alamat");
+            console.log(err.message || "Gagal mengambil data alamat");
           });
       } else {
-        alert("Token tidak ditemukan. Silakan login terlebih dahulu.");
+        console.log("Token tidak ditemukan. Silakan login terlebih dahulu.");
         navigate("/auth/login");
       }
     } else {
@@ -92,7 +89,7 @@ const Address = () => {
     return () => {
       dispatch(clearCurrentAddress());
     };
-  }, [dispatch, isEdit, addressId, navigate]);
+  }, [dispatch, isEdit, addressId, navigate, token]);
 
   // Populate form saat data alamat di-fetch
   useEffect(() => {
@@ -114,7 +111,7 @@ const Address = () => {
         dispatch(fetchCities(currentAddress.provinsi.province_id))
           .unwrap()
           .catch((err) => {
-            alert(err.message || "Gagal mengambil kota");
+            console.log(err.message || "Gagal mengambil kota");
           });
       }
     }
@@ -136,7 +133,7 @@ const Address = () => {
         dispatch(fetchCities(value))
           .unwrap()
           .catch((err) => {
-            alert(err.message || "Gagal mengambil kota");
+            console.log(err.message || "Gagal mengambil kota");
           });
       }
     } else if (name === "kota") {
@@ -173,7 +170,7 @@ const Address = () => {
 
     for (let field of requiredFields) {
       if (!formData[field]) {
-        alert(`Field ${field} harus diisi`);
+        console.log(`Field ${field} harus diisi`);
         return;
       }
     }
@@ -204,22 +201,18 @@ const Address = () => {
       },
     };
 
-    const token = Cookies.get("token"); // Ganti 'token' dengan nama cookie yang Anda gunakan
-
     if (!token) {
-      alert("Token tidak ditemukan. Silakan login terlebih dahulu.");
+      console.log("Token tidak ditemukan. Silakan login terlebih dahulu.");
       navigate("/login"); // Ganti dengan route login Anda
       return;
     }
-
-    console.log("Payload to be sent:", payload);
 
     try {
       if (isEdit) {
         await dispatch(
           updateAddress({ id: addressId, addressData: payload, token })
         ).unwrap();
-        alert("Alamat berhasil diupdate");
+        console.log("Alamat berhasil diupdate");
         navigate("/shop/my-address");
         setFormData({
           namaPenerima: "",
@@ -235,7 +228,7 @@ const Address = () => {
         setFormShow(false);
       } else {
         await dispatch(addNewAddress({ addressData: payload, token })).unwrap();
-        alert("Alamat berhasil ditambahkan");
+        console.log("Alamat berhasil ditambahkan");
         setFormData({
           namaPenerima: "",
           nomorTelepon: "",
@@ -258,14 +251,12 @@ const Address = () => {
     if (window.confirm("Apakah Anda yakin ingin menghapus alamat ini?")) {
       try {
         await dispatch(deleteAddress({ id, token })).unwrap();
-        alert("Alamat berhasil dihapus");
+        console.log("Alamat berhasil dihapus");
       } catch (error) {
-        alert(error.message || "Gagal menghapus alamat");
+        console.log(error.message || "Gagal menghapus alamat");
       }
     }
   };
-
-  console.log(formShow);
 
   return (
     <div className="w-full p-6 bg-white shadow-md">

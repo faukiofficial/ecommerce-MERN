@@ -2,45 +2,67 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductById } from "../../store/productSlice/productSlice";
-import { checkout } from "../../store/checkoutSlice/checkoutSlice";
+import { checkout } from "../../store/orderSlice/orderSlice";
 import { AiOutlineLoading } from "react-icons/ai";
 import Cookies from "js-cookie";
 import { getAllAddress } from "../../store/addressForm-slice/addressFormSlice";
+import formatNumber from "../../components/helpers/formatNumber";
+import { fetchShippingCosts } from "../../store/shippingCostSlice/shippingCostSlice";
+import { removeFromCart } from "../../store/cartSlice/cartSlice";
 
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { selectedItems, token } = location.state;
+  const { selectedItems } = location.state;
   const { isCheckoutLoading, successMessage } = useSelector(
-    (state) => state.checkout
+    (state) => state.order
   );
   const { addresses } = useSelector((state) => state.address);
   const { isLoading } = useSelector((state) => state.product);
+  const { storeProfile } = useSelector((state) => state.storeProfile);
+  const {
+    costs,
+    isLoading: isShippingLoading,
+    error: shippingError,
+  } = useSelector((state) => state.shipping);
+
+  console.log("kota asal", storeProfile?.alamat?.kota?.city_id);
 
   const [fetchedProducts, setFetchedProducts] = useState([]);
-  const [shippingCost, setShippingCost] = useState(0); // State untuk ongkir
+  const [selectedShippingOption, setSelectedShippingOption] = useState(null);
+  const [selectedShippingCode, setSelectedShippingCode] = useState("");
+  const [totalShippingCost, setTotalShippingCost] = useState(0);
   const [selectedAddress, setSelectedAddress] = useState({}); // State untuk alamat
+  const [selectedCourierCode, setSelectedCourierCode] = useState("");
 
-  console.log("ini alamatnya",selectedAddress);
-  
+  console.log("kota tujuan", selectedAddress?.kota?.city_id);
+  console.log("selectedAddress", selectedAddress);
+  console.log("ongkir", costs);
+  console.log("selectedShippingOption", selectedShippingOption);
+  console.log("selectedShippingCode", selectedShippingCode);
+  console.log("selectedCourierCode", selectedCourierCode);
+  console.log("fetchedProducts", fetchedProducts);
+  console.log("selectedItems", selectedItems);
+  console.log("successMessage", successMessage);
+
+  const token = Cookies.get("token");
 
   useEffect(() => {
     document.title = "Checkout | Shopping App";
   }, []);
 
   useEffect(() => {
-    const token = Cookies.get("token");
     dispatch(getAllAddress(token));
-  }, [dispatch]);
+  }, [dispatch, token]);
 
   // Ambil detail produk berdasarkan selectedItems
   useEffect(() => {
     const fetchProductDetails = async () => {
       const products = [];
       for (const productId of Object.keys(selectedItems)) {
-        const product = await dispatch(getProductById({ productId })).unwrap();
+        const product = await dispatch(getProductById(productId)).unwrap();
         products.push(product);
       }
       setFetchedProducts(products);
@@ -48,21 +70,6 @@ const Checkout = () => {
 
     fetchProductDetails();
   }, [dispatch, selectedItems]);
-
-  const handleConfirmCheckout = () => {
-    const productsToCheckout = Object.keys(selectedItems).map((productId) => ({
-      productId,
-      quantity: selectedItems[productId],
-    }));
-
-    dispatch(checkout({ selectedItems: productsToCheckout, token })).then(
-      () => {
-        if (successMessage) {
-          navigate("/order-success");
-        }
-      }
-    );
-  };
 
   const handleSelectAddress = (addressId) => {
     const selected = addresses.find((address) => address._id === addressId);
@@ -77,10 +84,117 @@ const Checkout = () => {
     (total, item) => total + item.weight * selectedItems[item._id],
     0
   ); // Hitung total berat
-  const totalPrice = totalWithoutShipping + shippingCost; // Total termasuk ongkir
+
+  useEffect(() => {
+    const handleFetchCosts = () => {
+      if (
+        !storeProfile?.alamat?.kota?.city_id ||
+        !selectedAddress?.kota?.city_id
+      )
+        return;
+
+      // Fetch shipping costs for all couriers (JNE, POS, TIKI)
+      const couriers = ["jne", "pos", "tiki"];
+      const fetchPromises = couriers.map((courier) => {
+        if (!costs || !costs.length) {
+          dispatch(
+            fetchShippingCosts({
+              origin: storeProfile?.alamat?.kota?.city_id,
+              destination: selectedAddress?.kota?.city_id,
+              weight: totalWeight,
+              courier,
+            })
+          );
+        }
+      });
+
+      // Wait for all promises to resolve
+      Promise.all(fetchPromises).catch((error) => {
+        console.error("Error fetching shipping costs:", error);
+      });
+    };
+
+    handleFetchCosts();
+  }, [
+    dispatch,
+    storeProfile?.alamat?.kota?.city_id,
+    selectedAddress?.kota?.city_id,
+    totalWeight,
+    costs,
+  ]);
+
+  const handleSelectShipping = (shippingOption) => {
+    setSelectedShippingOption(shippingOption);
+    setSelectedShippingCode(selectedCourierCode);
+    setTotalShippingCost(shippingOption.cost[0].value); // Set ongkir yang dipilih
+  };
+
+  const totalPrice = totalWithoutShipping + totalShippingCost;
+
+  // Mengelompokkan kurir berdasarkan `code` untuk menghindari duplikasi
+  const uniqueCouriers = costs.reduce((acc, courier) => {
+    if (!acc[courier.code]) {
+      acc[courier.code] = { ...courier };
+    } else {
+      // Menggabungkan layanan (services) jika kurir sudah ada
+      acc[courier.code].costs = acc[courier.code].costs.concat(courier.costs);
+    }
+    return acc;
+  }, {});
+
+  const uniqueCourierList = Object.values(uniqueCouriers);
+
+  // CKECHOUT METOHDS
+
+  const handleRemoveFromCart = () => {
+    console.log("handleRemoveFromCart jalan");
+    const productIds = fetchedProducts.map((product) => product._id);
+
+    productIds.forEach((id) => {
+      console.log("product id untuk remove", id);
+      dispatch(removeFromCart({ productId: id, token }));
+    });
+  };
+
+  const handleConfirmCheckout = () => {
+    const orderData = {
+      items: fetchedProducts,
+      quantities: selectedItems,
+      addressId: selectedAddress._id, // ID alamat yang dipilih
+      shippingCost: totalShippingCost, // Total biaya pengiriman
+      totalPrice: totalWithoutShipping, // Total harga keseluruhan yang sudah dihitung di frontend
+      shippingOption: selectedShippingOption, // Opsi pengiriman yang dipilih
+      selectedShippingCode,
+    };
+
+    dispatch(checkout({ orderData, token }))
+      .then((response) => {
+        console.log("checkout success jalaaaaan", response);
+        if (response.payload.success) {
+          navigate("/shop/payment", {
+            state: {
+              items: fetchedProducts,
+              quantities: selectedItems,
+              addressId: selectedAddress._id,
+              shippingCost: totalShippingCost,
+              totalWithoutShipping,
+              selectedShippingOption,
+              selectedShippingCode,
+              orderId: response.payload.newOrder._id,
+            },
+          });
+          setSelectedShippingOption(null);
+          setSelectedShippingCode("");
+          setSelectedAddress(null);
+        }
+      })
+      .catch((error) => {
+        console.error("Checkout failed:", error);
+      });
+  };
 
   return (
-    <div className="w-full p-4 bg-white min-h-screen">
+    <div className="w-full p-4 bg-white">
       <h2 className="text-2xl font-semibold mb-4">Checkout Summary</h2>
 
       <div className="mb-7 border-b pb-3">
@@ -92,13 +206,16 @@ const Checkout = () => {
               className={`border rounded-md p-3 shadow-sm cursor-pointer ${
                 selectedAddress._id === address._id ? "bg-primary-light" : ""
               }`}
-              onClick={() => handleSelectAddress(address._id)}
+              onClick={() => {
+                handleSelectAddress(address._id);
+              }}
             >
               <h4 className="font-semibold">
                 {address.namaPenerima} | {address.nomorTelepon}
               </h4>
               <p>
-                {address.jalan}, {address.rtrw && 'RT/RW'} {address.rtrw}, {address.kelurahan}, Kec. {address.kecamatan}
+                {address.jalan}, {address.rtrw && "RT/RW"} {address.rtrw},{" "}
+                {address.kelurahan}, Kec. {address.kecamatan}
               </p>
               <p className="mb-2">
                 {address.kota.type === "Kabupaten" ? "Kab." : "Kota"}{" "}
@@ -118,72 +235,171 @@ const Checkout = () => {
         <table className="min-w-full border-collapse">
           <thead>
             <tr>
-              <th className="border px-4 py-2">Product Title</th>
+              <th className="border px-4 py-2">Product</th>
               <th className="border px-4 py-2">Price</th>
               <th className="border px-4 py-2">Quantity</th>
               <th className="border px-4 py-2">Weight</th>
-              <th className="border px-4 py-2">Total</th>
             </tr>
           </thead>
           <tbody>
             {fetchedProducts.map((item) => {
-              const totalPrice = item.salePrice * selectedItems[item._id];
               return (
                 <tr key={item._id}>
-                  <td className="border px-4 py-2">{item.title}</td>
                   <td className="border px-4 py-2">
-                    Rp {item.salePrice.toLocaleString()}
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={item.images[0]}
+                        alt={item.title}
+                        className="w-10 h-10 object-contain"
+                      />
+                      {item.title}
+                    </div>
+                  </td>
+                  <td className="border px-4 py-2">
+                    Rp {formatNumber(item.salePrice)}
                   </td>
                   <td className="border px-4 py-2">
                     {selectedItems[item._id]}
                   </td>
-                  <td className="border px-4 py-2">@{item.weight} gr</td>
                   <td className="border px-4 py-2">
-                    Rp {totalPrice.toLocaleString()}
+                    @{formatNumber(item.weight)} gr
                   </td>
                 </tr>
               );
             })}
           </tbody>
-          <tfoot>
+        </table>
+      )}
+
+      <div className="flex justify-between mt-4 items-start">
+        <div>
+          {/* Opsi pengiriman */}
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold mb-4">Pilih Pengiriman:</h3>
+            {selectedAddress && costs && costs.length > 0 ? (
+              <div className="flex items-center gap-4">
+                {uniqueCourierList.map((courier) => (
+                  <div
+                    key={courier.code}
+                    className={`border rounded-md p-2 cursor-pointer ${
+                      selectedShippingCode === courier.code
+                        ? "bg-primary-light"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedCourierCode(courier.code)}
+                  >
+                    <h4 className="font-semibold">
+                      {courier.code.toUpperCase()}
+                    </h4>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="p-2 bg-red-300">
+                Pilih alamat terlebih dahulu
+              </span>
+            )}
+          </div>
+
+          {selectedShippingOption && (
+            <span className="mt-4 p-2 bg-green-300 rounded">
+              {selectedShippingCode.toUpperCase()} -{" "}
+              {selectedShippingOption.description} (
+              {selectedShippingOption.service} :{" "}
+              {selectedShippingOption.cost[0].etd}{" "}
+              {selectedShippingOption.cost[0].etd.includes("HARI")
+                ? ""
+                : "HARI"}
+              )
+            </span>
+          )}
+        </div>
+
+        <table>
+          <tbody>
             <tr>
               <td colSpan="3" className="text-right font-bold">
-                Total:
+                Total Harga:
               </td>
-              <td className="border px-4 py-2 font-bold">
-                Rp {totalWithoutShipping.toLocaleString()}
+              <td className="px-4 py-2 font-bold">
+                Rp. {formatNumber(totalWithoutShipping)}
               </td>
             </tr>
             <tr>
               <td colSpan="3" className="text-right font-bold">
                 Total Weight:
               </td>
-              <td className="border px-4 py-2 font-bold">
-                {totalWeight.toLocaleString()} gr
+              <td className="px-4 py-2 font-bold">
+                {formatNumber(totalWeight)} gr
               </td>
             </tr>
             <tr>
               <td colSpan="3" className="text-right font-bold">
                 Ongkir:
               </td>
-              <td className="border px-4 py-2 font-bold">
-                Rp {shippingCost.toLocaleString()}
+              <td className="px-4 py-2 font-bold">
+                Rp. {formatNumber(totalShippingCost)}
               </td>
             </tr>
             <tr>
               <td colSpan="3" className="text-right font-bold">
                 Total + Ongkir:
               </td>
-              <td className="border px-4 py-2 font-bold">
-                Rp {totalPrice.toLocaleString()}
+              <td className="border border-primary px-4 py-2 font-bold">
+                Rp. {formatNumber(totalPrice)}
               </td>
             </tr>
-          </tfoot>
+          </tbody>
         </table>
+      </div>
+
+      {costs && costs.length > 0 && selectedCourierCode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-md shadow-md max-w-3xl w-full overflow-auto">
+            <h2 className="text-xl font-semibold mb-4">Opsi Pengiriman</h2>
+            <table className="min-w-full border-collapse">
+              <tbody>
+                {costs
+                  .filter((cost) => cost.code === selectedCourierCode)
+                  .flatMap((cost) =>
+                    cost.costs.map((option) => (
+                      <tr
+                        key={option.service}
+                        className="border-b cursor-pointer hover:bg-primary-light"
+                        onClick={() => {
+                          handleSelectShipping(option);
+                          setSelectedCourierCode("");
+                        }}
+                      >
+                        <td className="border px-4 py-2">
+                          {option.description} ({option.service})
+                        </td>
+                        <td className="border px-4 py-2">
+                          Rp. {formatNumber(option.cost[0].value)} (
+                          {option.cost[0].etd.toLowerCase()}{" "}
+                          {option.cost[0].etd.includes("HARI") ? "" : "hari"})
+                        </td>
+                      </tr>
+                    ))
+                  )}
+              </tbody>
+            </table>
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mt-4"
+              onClick={() => setSelectedCourierCode("")}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
       )}
+
       <div className="mt-4 flex justify-end">
         <button
-          onClick={handleConfirmCheckout}
+          onClick={() => {
+            handleConfirmCheckout();
+            handleRemoveFromCart();
+          }}
           className={`px-4 py-2 text-white ${
             isCheckoutLoading
               ? "bg-gray-400 cursor-not-allowed"

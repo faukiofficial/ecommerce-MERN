@@ -159,7 +159,7 @@ const EditProfile = () => {
             </div>
           ) : (
             <div
-              className="relative w-32 h-32 border border-gray-300 bg-gray-100 flex items-center justify-center cursor-pointer rounded-full"
+              className="relative w-32 h-32 group mx-auto border border-gray-300 bg-gray-100 flex items-center justify-center cursor-pointer rounded-full"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
             >
@@ -168,54 +168,55 @@ const EditProfile = () => {
                 onChange={handleFileChange}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
-              <p className="text-gray-500 text-center  rounded-full">
-                Drag or click to add
+              <p className="text-gray-500 text-sm p-2 mt-2 text-center rounded-full">
+                Drag or click to add profile picture
               </p>
             </div>
           )}
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Full Name</label>
-          <input
-            type="text"
-            name="fullName"
-            value={profile.fullName}
-            onChange={handleInputChange}
-            className="mt-1 p-2 w-full border rounded-lg focus:border-primary-dark focus:ring-primary-dark"
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="mb-4">
+            <label className="block text-gray-700">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              value={profile.fullName}
+              onChange={handleInputChange}
+              className="mt-1 p-2 w-full border rounded-lg focus:border-primary-dark focus:ring-primary-dark"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Phone Number</label>
+            <input
+              type="text"
+              name="phoneNumber"
+              value={profile.phoneNumber}
+              onChange={handleInputChange}
+              className="mt-1 p-2 w-full border rounded-lg focus:border-primary-dark focus:ring-primary-dark"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={profile.email}
+              onChange={handleInputChange}
+              className="mt-1 p-2 w-full border rounded-lg focus:border-primary-dark focus:ring-primary-dark"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Username</label>
+            <input
+              type="text"
+              name="userName"
+              value={profile.userName}
+              onChange={handleInputChange}
+              className="mt-1 p-2 w-full border rounded-lg focus:border-primary-dark focus:ring-primary-dark"
+            />
+          </div>
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Phone Number</label>
-          <input
-            type="text"
-            name="phoneNumber"
-            value={profile.phoneNumber}
-            onChange={handleInputChange}
-            className="mt-1 p-2 w-full border rounded-lg focus:border-primary-dark focus:ring-primary-dark"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={profile.email}
-            onChange={handleInputChange}
-            className="mt-1 p-2 w-full border rounded-lg focus:border-primary-dark focus:ring-primary-dark"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Username</label>
-          <input
-            type="text"
-            name="userName"
-            value={profile.userName}
-            onChange={handleInputChange}
-            className="mt-1 p-2 w-full border rounded-lg focus:border-primary-dark focus:ring-primary-dark"
-          />
-        </div>
-
         <button
           type="submit"
           className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors duration-200"

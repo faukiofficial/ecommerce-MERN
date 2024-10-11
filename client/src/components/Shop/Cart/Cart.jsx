@@ -2,8 +2,9 @@ import { AiOutlineLoading } from "react-icons/ai";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { ImFileEmpty } from "react-icons/im";
 import { useDispatch, useSelector } from "react-redux";
-import { checkout } from "../../../store/checkoutSlice/checkoutSlice";
+import { checkout } from "../../../store/orderSlice/orderSlice";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const Cart = ({
   isCartOpen,
@@ -11,6 +12,8 @@ const Cart = ({
   cartRef,
   cart,
   selectedItemsFK,
+  setSelectedItems,
+  setSelectedTotal,
   handleSelectItem,
   handleRemoveFromCart,
   handleUpdateQuantity,
@@ -22,22 +25,25 @@ const Cart = ({
   isRemoving,
   removingItemId,
   selectedTotal,
-  token,
 }) => {
   const navigate = useNavigate();
+  const [stockMessage, setStockMessage] = useState("");
+  const [alertShow, setAlertShow] = useState(false);
+
+  console.log("selected", selectedItemsFK);
 
   const handleCheckout = () => {
     navigate("/shop/checkout", {
       state: {
         selectedItems: selectedItemsFK,
-        total: selectedTotal,
-        token,
       },
-    })
-    setIsCartOpen(false)
+    });
+    setIsCartOpen(false);
+    setSelectedItems({});
+    setSelectedTotal(0);
+    setInputValues({});
   };
 
-  console.log('selected',selectedItemsFK)
   return (
     <div>
       {isCartOpen && (
@@ -60,7 +66,9 @@ const Cart = ({
                     <input
                       type="checkbox"
                       checked={selectedItemsFK[item.product._id] || false}
-                      onChange={() => handleSelectItem(item.product._id, item.quantity)}
+                      onChange={() =>
+                        handleSelectItem(item.product._id, item.quantity)
+                      }
                       className="mr-2"
                     />
                     {/* Display product image */}
@@ -92,6 +100,8 @@ const Cart = ({
                           if (item.quantity === 1) {
                             handleRemoveFromCart(item.product._id);
                           } else {
+                            setSelectedItems({});
+                            setSelectedTotal(0);
                             handleUpdateQuantity(
                               item.product._id,
                               item.quantity - 1
@@ -114,8 +124,23 @@ const Cart = ({
                           value={inputValues[item.product._id] || item.quantity}
                           className="w-[60px] py-1 text-center border rounded focus:outline-none"
                           onChange={(e) => {
-                            const newValue = e.target.value;
+                            setSelectedItems({});
+                            setSelectedTotal(0);
+                            let newValue = e.target.value;
+
                             if (/^\d*$/.test(newValue)) {
+                              const numericValue = newValue;
+
+                              // Jika melebihi stok produk
+                              if (numericValue > item.product.stock) {
+                                setStockMessage(
+                                  `You can order more than stock (${item.product.stock})`
+                                );
+                                setAlertShow(true);
+                                setInputValues({});
+                                return;
+                              }
+
                               setInputValues((prev) => ({
                                 ...prev,
                                 [item.product._id]: newValue,
@@ -123,15 +148,25 @@ const Cart = ({
                             }
                           }}
                           onKeyDown={(e) => handleKeyDown(e, item.product._id)}
+                          disabled={alertShow}
                         />
                       )}
                       <button
-                        onClick={() =>
-                          handleUpdateQuantity(
-                            item.product._id,
-                            item.quantity + 1
-                          )
-                        }
+                        onClick={() => {
+                          if (item.quantity === item.product.stock) {
+                            setStockMessage(
+                              `You can order more than stock (${item.product.stock})`
+                            );
+                            setAlertShow(true);
+                          } else {
+                            setSelectedItems({});
+                            setSelectedTotal(0);
+                            handleUpdateQuantity(
+                              item.product._id,
+                              item.quantity + 1
+                            );
+                          }
+                        }}
                         className="px-2 py-1 bg-gray-200"
                         disabled={isQuantityUpdateting}
                       >
@@ -176,8 +211,28 @@ const Cart = ({
               }`}
               disabled={selectedTotal === 0}
             >
-                <span>Checkout</span>
+              <span>Checkout</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {alertShow && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-3 rounded-md shadow-md max-w-[350px] md:max-w-[450px]">
+            <p className="mb-4">{stockMessage}</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setAlertShow(false);
+                  setStockMessage("");
+                  setInputValues({});
+                }}
+                className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400"
+              >
+                Oke
+              </button>
+            </div>
           </div>
         </div>
       )}

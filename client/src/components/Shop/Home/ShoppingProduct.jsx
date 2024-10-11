@@ -9,6 +9,7 @@ import { MdAddShoppingCart } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { useState } from "react";
 import formatToK from "./../../helpers/formatToK";
+import { useNavigate } from "react-router-dom";
 
 const columns = [
   { key: "createdAt", label: "New" },
@@ -27,9 +28,9 @@ const ShoppingProduct = ({
   handleAddToCart,
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
-  const { user } = useSelector(
-    (state) => state.auth
-  );
+  const { user } = useSelector((state) => state.auth);
+
+  const navigate = useNavigate()
 
   const discountCounter = (price, salePrice) => {
     const discount = ((price - salePrice) / price) * 100;
@@ -157,7 +158,7 @@ const ShoppingProduct = ({
                 <button
                   className="bg-white text-black w-full px-3 py-1 border-[1px] border-primary"
                   onClick={() =>
-                    (window.location.href = `http://localhost:5173/shop/product?id=${product._id}`)
+                    (navigate(`/shop/product/${product._id}`))
                   }
                 >
                   <span className="text-primary-dark font-semibold">

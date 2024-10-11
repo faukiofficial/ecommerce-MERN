@@ -325,7 +325,7 @@ const ProductTable = () => {
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages}
             >
-              <MdNavigateNext className="" />
+              <MdNavigateNext />
             </button>
           </div>
         </div>

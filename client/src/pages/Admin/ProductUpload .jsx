@@ -21,7 +21,6 @@ const ProductUpload = () => {
   const [images, setImages] = useState([]);
   const [productId, setProductId] = useState(null);
   const [deletedImages, setDeletedImages] = useState([]);
-  const [deliveryAvailable, setDeliveryAvailable] = useState(false);
   const [error, setError] = useState("");
   const location = useLocation();
 
@@ -56,7 +55,7 @@ const ProductUpload = () => {
     const id = query.get("id");
     if (id) {
       setProductId(id);
-      dispatch(getProductById({ productId: id }));
+      dispatch(getProductById(id));
     }
   }, [location.search, dispatch]);
 
@@ -82,7 +81,6 @@ const ProductUpload = () => {
       setWeight(formatNumber(product.weight));
       setStock(formatNumber(product.stock));
       setImages(product.images);
-      setDeliveryAvailable(product.deliveryAvailable);
     }
   }, [product, productId]);
 
@@ -172,7 +170,6 @@ const ProductUpload = () => {
     setImages([]);
     setDeletedImages([]);
     setProductId(null);
-    setDeliveryAvailable(false);
   };
 
   const handleSubmit = async (event) => {
@@ -203,7 +200,6 @@ const ProductUpload = () => {
     formData.append("salePrice", removeDots(salePrice));
     formData.append("weight", removeDots(weight));
     formData.append("stock", removeDots(stock));
-    formData.append("deliveryAvailable", deliveryAvailable);
 
     for (let i = 0; i < images.length; i++) {
       if (typeof images[i] !== "string") {
@@ -437,23 +433,6 @@ const ProductUpload = () => {
             </div>
           </div>
         )}
-
-        {/* Delivery Availability */}
-        <div className="flex items-center gap-2 p-1 py-2 border bg-primary-light rounded-[4px]">
-          <label
-            htmlFor="delivery"
-            className="block text-sm font-medium"
-          >
-            Delivery Available?
-          </label>
-          <input
-            type="checkbox"
-            id="delivery"
-            checked={deliveryAvailable}
-            onChange={(e) => setDeliveryAvailable(e.target.checked)}
-            className="h-4 w-4 text-blue-600 focus:ring-primary-dark border-gray-300 rounded"
-          />
-        </div>
 
         {/* Error Message */}
         {errorMessage || error && (

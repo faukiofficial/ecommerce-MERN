@@ -93,7 +93,7 @@ export const getAllProduct = createAsyncThunk(
 // Async Thunk untuk get produk by id
 export const getProductById = createAsyncThunk(
   "/products/getProductById",
-  async ({ productId }) => {
+  async (productId) => {
     const response = await axios.get(
       `http://localhost:7500/api/products/${productId}`
     );

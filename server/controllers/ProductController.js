@@ -13,7 +13,6 @@ exports.createProduct = async (req, res) => {
       stock,
       category,
       tags,
-      deliveryAvailable,
     } = req.body;
 
     let images = [];
@@ -35,7 +34,6 @@ exports.createProduct = async (req, res) => {
       category,
       tags: tags ? tags.split(",") : [],
       images,
-      deliveryAvailable,
     });
 
     await product.save();
@@ -115,7 +113,6 @@ exports.updateProductById = async (req, res) => {
       category,
       tags,
       deletedImages,
-      deliveryAvailable,
     } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -156,7 +153,6 @@ exports.updateProductById = async (req, res) => {
     product.weight = weight;
     product.stock = stock;
     product.category = category;
-    product.deliveryAvailable = deliveryAvailable;
     product.tags = tags ? tags.split(",") : [];
 
     await product.save();

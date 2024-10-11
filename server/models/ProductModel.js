@@ -50,11 +50,6 @@ const productSchema = new mongoose.Schema({
     trim: true,
     required: true
   }],
-  deliveryAvailable: {
-    type: Boolean,
-    required: true,
-    default: false
-  }
 }, {
   timestamps: true 
 });

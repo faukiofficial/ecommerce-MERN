@@ -8,12 +8,14 @@ import { IoIosLogOut } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../../store/auth-slice/authSlice";
 import { AiOutlineLoading } from "react-icons/ai";
+import { FaAngleUp, FaAngleDown } from "react-icons/fa6";
 
 const AdminLayout = () => {
   const location = useLocation();
   const dispatch = useDispatch();
 
   const { isLoading, user } = useSelector((state) => state.auth);
+  
 
   // Function to determine the active breadcrumb based on the current path
   const getBreadcrumb = () => {
@@ -26,8 +28,8 @@ const AdminLayout = () => {
         return "Edit Product";
       case "/admin/orders":
         return "Orders";
-      case "/admin/store-setting":
-        return "Store Setting";
+      case "/admin/admin-profile":
+        return "Admin Profile";
       default:
         return "";
     }
@@ -54,11 +56,38 @@ const AdminLayout = () => {
       icon: <AiOutlineShoppingCart className="text-xl" />,
     },
     {
-      to: "store-setting",
       label: "Store Setting",
       icon: <IoSettingsOutline className="text-xl" />,
+      subMenu: [
+        {
+          to: "admin-profile",
+          label: "Admin Profile",
+        },
+        {
+          to: "store-profile",
+          label: "Store Profile",
+        },
+      ],
     },
   ];
+
+  const renderSubMenu = (subMenu) => {
+    return subMenu.map((item) => (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={({ isActive }) =>
+          `block py-2 px-4 w-full ${
+            isActive
+              ? "text-primary font-bold"
+              : "hover:text-primary hover:underline"
+          }`
+        }
+      >
+        {item.label}
+      </NavLink>
+    ));
+  };
 
   function getFirstTwoWords(sentence) {
     const words = sentence.split(" "); // Memisahkan kalimat menjadi kata-kata
@@ -78,7 +107,7 @@ const AdminLayout = () => {
             to="/admin/products"
             className="text-2xl font-bold cursor-pointer text-primary"
           >
-            Logo
+            {"Logo"}
           </Link>
           <div className="lg:flex items-center space-x-2 hidden">
             <span className="text-gray-500">/</span>
@@ -89,7 +118,7 @@ const AdminLayout = () => {
         </div>
         <div className="flex items-center gap-1 cursor-pointer">
           <img
-            src={user.profilePicture || userAvatarLink}
+            src={user.profilePicture?.url || userAvatarLink}
             alt={user.fullName}
             width={35}
             height={35}
@@ -110,24 +139,71 @@ const AdminLayout = () => {
       <div className="flex">
         <aside className="hidden fixed z-10 min-w-[180px] bg-white text-black border min-h-screen lg:flex flex-col justify-between pb-[80px]">
           <nav className="mt-6">
-            {navLinks.map(({ to, label, icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `block py-2 px-4 ${
-                    isActive
-                      ? "bg-primary-light border-l-4 border-primary-dark"
-                      : "hover:bg-primary-light"
-                  }`
-                }
-              >
-                <div className="flex items-center gap-2">
-                  {icon}
-                  {label}
+            {navLinks.map(({ to, label, icon, subMenu }) => {
+              // Check if any submenu item is active
+              const isSubMenuActive =
+                subMenu &&
+                subMenu.some((item) => location.pathname.includes(item.to));
+
+              return (
+                <div key={label} className="relative group">
+                  <div className="flex items-center justify-between cursor-pointer hover:bg-primary-light">
+                    {to ? (
+                      <NavLink
+                        to={to}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2 py-2 px-2 w-full ${
+                            isActive
+                              ? "bg-primary-light border-l-4 border-primary-dark"
+                              : "hover:bg-primary-light"
+                          }`
+                        }
+                      >
+                        <div className="flex items-center gap-2">
+                          {icon}
+                          {label}
+                        </div>
+                      </NavLink>
+                    ) : (
+                      <div className="flex items-center gap-2 py-2 px-2 w-full">
+                        {icon}
+                        {label}
+                      </div>
+                    )}
+
+                    {subMenu && (
+                      <span className="text-lg mr-2">
+                        <span
+                          className={`${
+                            isSubMenuActive ? "hidden" : "group-hover:hidden"
+                          }`}
+                        >
+                          <FaAngleDown />
+                        </span>
+                        <span
+                          className={`${
+                            isSubMenuActive
+                              ? "inline"
+                              : "hidden group-hover:inline"
+                          }`}
+                        >
+                          <FaAngleUp />
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                  {subMenu && (
+                    <div
+                      className={`${
+                        isSubMenuActive ? "block" : "hidden group-hover:block"
+                      } w-full bg-white shadow-sm`}
+                    >
+                      {renderSubMenu(subMenu)}
+                    </div>
+                  )}
                 </div>
-              </NavLink>
-            ))}
+              );
+            })}
           </nav>
           {/* Logout Button */}
           <button

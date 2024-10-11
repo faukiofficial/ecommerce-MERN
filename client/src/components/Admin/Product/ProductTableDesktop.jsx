@@ -8,7 +8,6 @@ const columns = [
   { key: "title", label: "Product" },
   { key: "salePrice", label: "Price" },
   { key: "stock", label: "Stock" },
-  { key: "deliveryAvailable", label: "Delivery" },
   { key: "sold", label: "Sold" },
   { key: "createdAt", label: "Upload", hiddenOnSmall: true },
 ];
@@ -115,11 +114,6 @@ const ProductTableDesktop = ({
               <td className="border px-1 py-2">
                 <div className="flex justify-center">
                   {formatNumber(product.stock)}
-                </div>
-              </td>
-              <td className="border px-1 py-2">
-                <div className="flex justify-center">
-                  {product.deliveryAvailable ? "Yes" : "No"}
                 </div>
               </td>
               <td className="border px-1 py-2">

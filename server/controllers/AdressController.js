@@ -15,9 +15,6 @@ exports.createAddress = async (req, res) => {
       provinsi,
     } = req.body;
 
-    console.log("User daro con", req.user);
-    console.log("Request Body dari con:", req.body);
-
     // Validasi keberadaan objek provinsi dan kota
     if (!provinsi || !provinsi.province_id || !provinsi.province) {
       return res
