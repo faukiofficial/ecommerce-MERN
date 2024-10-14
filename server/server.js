@@ -3,8 +3,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDb = require("./config/db");
 const cookieParser = require("cookie-parser");
-const morgan = require("morgan"); // Import morgan untuk logging
-const helmet = require("helmet"); // Import helmet untuk keamanan
+const morgan = require("morgan");
 
 const productRoute = require("./routes/ProductRoutes");
 const userAuthRoute = require("./routes/UserAuthRoutes");
@@ -22,7 +21,7 @@ const app = express();
 connectDb();
 
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: process.env.CLIENT_URL,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: [
     "Content-Type",
