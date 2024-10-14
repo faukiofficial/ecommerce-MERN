@@ -1,6 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const API_ADDRESS_URL = import.meta.env.VITE_BACKEND_URL;
+
+const PRODUCT_URL = API_ADDRESS_URL + "/api/products";
+
 // Initial State
 const initialState = {
   product: null,
@@ -20,7 +24,7 @@ export const addProduct = createAsyncThunk(
     // const token = Cookies.get("token");
 
     const response = await axios.post(
-      "http://localhost:7500/api/products",
+      PRODUCT_URL,
       formData,
       {
         headers: {
@@ -40,7 +44,7 @@ export const editProduct = createAsyncThunk(
   "/products/edit",
   async ({ formData, productId, token }) => {
     const response = await axios.put(
-      `http://localhost:7500/api/products/${productId}`,
+      `${PRODUCT_URL}/${productId}`,
       formData,
       {
         headers: {
@@ -60,7 +64,7 @@ export const deleteProductById = createAsyncThunk(
   "/products/delete",
   async ({ productId, token }) => {
     const response = await axios.delete(
-      `http://localhost:7500/api/products/${productId}`,
+      `${PRODUCT_URL}/${productId}`,
       {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
@@ -83,7 +87,7 @@ export const getAllProduct = createAsyncThunk(
     page = 1,
   }) => {
     const response = await axios.get(
-      `http://localhost:7500/api/products?category=${selectedCategory}&search=${searchQuery}&sortField=${sortField}&sortDirection=${sortDirection}&limit=${limit}&page=${page}`
+      `${PRODUCT_URL}?category=${selectedCategory}&search=${searchQuery}&sortField=${sortField}&sortDirection=${sortDirection}&limit=${limit}&page=${page}`
     );
 
     return response.data;
@@ -95,7 +99,7 @@ export const getProductById = createAsyncThunk(
   "/products/getProductById",
   async (productId) => {
     const response = await axios.get(
-      `http://localhost:7500/api/products/${productId}`
+      `${PRODUCT_URL}/${productId}`
     );
 
     return response.data;

@@ -1,6 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { useDispatch } from "react-redux";
+
+const API_ADDRESS_URL = import.meta.env.VITE_BACKEND_URL;
+
+const AUTH_URL = API_ADDRESS_URL + "/api/user";
 
 const initialState = {
   isAuthenticated: false,
@@ -12,7 +15,7 @@ export const registerUser = createAsyncThunk(
   "/auth/register",
   async (formData) => {
     const response = await axios.post(
-      "http://localhost:7500/api/user/register",
+      `${AUTH_URL}/register`,
       formData,
       {
         withCredentials: true,
@@ -25,7 +28,7 @@ export const registerUser = createAsyncThunk(
 
 export const loginUser = createAsyncThunk("/auth/login", async (formData) => {
   const response = await axios.post(
-    "http://localhost:7500/api/user/login",
+    `${AUTH_URL}/login`,
     formData,
     {
       withCredentials: true,
@@ -37,7 +40,7 @@ export const loginUser = createAsyncThunk("/auth/login", async (formData) => {
 
 export const logoutUser = createAsyncThunk("/auth/logout", async () => {
   const response = await axios.post(
-    "http://localhost:7500/api/user/logout",
+    `${AUTH_URL}/logout`,
     {},
     {
       withCredentials: true,
@@ -57,7 +60,7 @@ export const editProfile = createAsyncThunk(
     }
 
     const response = await axios.put(
-      `http://localhost:7500/api/user/edit-profile/${userId}`,
+      `${AUTH_URL}/edit-profile/${userId}`,
       formData,
       {
         withCredentials: true,
@@ -76,7 +79,7 @@ export const deleteProfile = createAsyncThunk(
     console.log('id delete', userId);
     
     const response = await axios.delete(
-      `http://localhost:7500/api/user/delete-profile/${userId}`,
+      `${AUTH_URL}/delete-profile/${userId}`,
       {
         withCredentials: true,
         headers: {
@@ -92,7 +95,7 @@ export const deleteProfile = createAsyncThunk(
 
 export const checkAuth = createAsyncThunk("/auth/checkauth", async () => {
   const response = await axios.get(
-    "http://localhost:7500/api/user/check-auth",
+    `${AUTH_URL}/check-auth`,
     {
       withCredentials: true,
       headers: {

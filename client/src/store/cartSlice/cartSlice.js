@@ -1,6 +1,10 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+const API_ADDRESS_URL = import.meta.env.VITE_BACKEND_URL;
+
+const CART_URL = API_ADDRESS_URL + "/api/cart";
+
 // Initial State
 const initialState = {
   cart: null,
@@ -14,13 +18,12 @@ const initialState = {
   successMessage: "",
 };
 
-const baseURL = 'http://localhost:7500/api/cart';
 
 // Async Thunks for Cart CRUD Operations
 
 // Get user's cart
 export const getCart = createAsyncThunk('/cart/getCart', async (token) => {
-  const response = await axios.get(baseURL, {
+  const response = await axios.get(CART_URL, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -32,7 +35,7 @@ export const getCart = createAsyncThunk('/cart/getCart', async (token) => {
 // Add product to cart
 export const addToCart = createAsyncThunk('/cart/addToCart', async ({ productId, quantity, token }) => {
   const response = await axios.post(
-    `${baseURL}/add`, 
+    `${CART_URL}/add`, 
     { productId, quantity }, 
     {
       headers: {
@@ -47,7 +50,7 @@ export const addToCart = createAsyncThunk('/cart/addToCart', async ({ productId,
 // Remove product from cart
 export const removeFromCart = createAsyncThunk('/cart/removeFromCart', async ({ productId, token }) => {
   const response = await axios.post(
-    `${baseURL}/remove`, 
+    `${CART_URL}/remove`, 
     { productId }, 
     {
       headers: {
@@ -62,7 +65,7 @@ export const removeFromCart = createAsyncThunk('/cart/removeFromCart', async ({ 
 // Update cart item quantity
 export const updateCartItem = createAsyncThunk('/cart/updateCartItem', async ({ productId, quantity, token }) => {
   const response = await axios.post(
-    `${baseURL}/update`, 
+    `${CART_URL}/update`, 
     { productId, quantity }, 
     {
       headers: {
@@ -76,7 +79,7 @@ export const updateCartItem = createAsyncThunk('/cart/updateCartItem', async ({ 
 
 // Clear cart
 export const clearCart = createAsyncThunk('/cart/clearCart', async (token) => {
-  const response = await axios.post(`${baseURL}/clear`, {}, {
+  const response = await axios.post(`${CART_URL}/clear`, {}, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

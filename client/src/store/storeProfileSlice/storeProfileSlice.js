@@ -1,7 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const STORE_PROFILE_URL = "http://localhost:7500/api/store-profile";
+const API_ADDRESS_URL = import.meta.env.VITE_BACKEND_URL;
+
+const STORE_PROFILE_URL = API_ADDRESS_URL + "/api/store-profile";
 
 const initialState = {
   storeProfile: null,

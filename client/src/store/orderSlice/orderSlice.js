@@ -1,17 +1,20 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Initial State
+const API_ADDRESS_URL = import.meta.env.VITE_BACKEND_URL;
+
+const ORDER_URL = API_ADDRESS_URL + "/api/order";
+
 const initialState = {
-  items: [], // List of items in cart
-  selectedItems: {}, // Items selected for checkout
-  total: 0, // Total price for checkout
-  isCheckoutLoading: false, // Loading state for checkout
-  orders: [], // List of all orders (admin)
-  userOrders: [], // List of user-specific orders
-  isLoadingOrders: false, // Loading state for fetching orders
-  errorMessage: "", // Error messages for both checkout and orders
-  successMessage: "", // Success message for checkout
+  items: [],
+  selectedItems: {},
+  total: 0,
+  isCheckoutLoading: false,
+  orders: [],
+  userOrders: [],
+  isLoadingOrders: false,
+  errorMessage: "",
+  successMessage: "",
   isUploadingProof: false,
   proofUploadSuccess: false,
   proofUploadError: null,
@@ -23,7 +26,7 @@ export const checkout = createAsyncThunk(
   async ({ orderData, token }) => {
     try {
       const response = await axios.post(
-        "http://localhost:7500/api/order/checkout",
+        `${ORDER_URL}/checkout`,
         orderData,
         {
           headers: {
@@ -46,7 +49,7 @@ export const getAllOrders = createAsyncThunk(
   "/order/getAllOrders",
   async ({ token, page = 1, limit = 10 }) => {
     try {
-      const response = await axios.get("http://localhost:7500/api/order/all", {
+      const response = await axios.get(`${ORDER_URL}/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -69,7 +72,7 @@ export const getUserOrders = createAsyncThunk(
   async ({ token, page = 1, limit = 10 }) => {
     try {
       const response = await axios.get(
-        "http://localhost:7500/api/order/user-orders",
+        `${ORDER_URL}/user-orders`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -98,7 +101,7 @@ export const uploadPaymentProof = createAsyncThunk(
       formData.append("paymentProof", paymentProof);
       
       const response = await axios.post(
-        "http://localhost:7500/api/order/upload-payment-proof",
+        `${ORDER_URL}/upload-payment-proof`,
         formData,
         {
           headers: {
@@ -130,7 +133,7 @@ export const updateOrderStatus = createAsyncThunk(
       }
 
       const response = await axios.put(
-        `http://localhost:7500/api/order/update-status/${orderId}`,
+        `${ORDER_URL}/update-status/${orderId}`,
         payload,
         {
           headers: {

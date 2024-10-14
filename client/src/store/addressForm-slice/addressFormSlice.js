@@ -1,7 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_ADDRESS_URL = "http://localhost:7500/api/address";
+const API_ADDRESS_URL = import.meta.env.VITE_BACKEND_URL;
+
+const ADDRESS_URL = API_ADDRESS_URL + "/api/address";
 
 const initialState = {
   addresses: [],
@@ -15,7 +17,7 @@ export const getAllAddress = createAsyncThunk(
   "address/getAllAddress",
   async (token) => {
     try {
-      const response = await axios.get(`${API_ADDRESS_URL}/get`, {
+      const response = await axios.get(`${ADDRESS_URL}/get`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -36,7 +38,7 @@ export const getAddressById = createAsyncThunk(
   "address/getAddressById",
   async ({ id, token }) => {
     try {
-      const response = await axios.get(`${API_ADDRESS_URL}/get/${id}`, {
+      const response = await axios.get(`${ADDRESS_URL}/get/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -56,7 +58,7 @@ export const addNewAddress = createAsyncThunk(
   "address/addNewAddress",
   async ({ addressData, token }) => {
     try {
-      const response = await axios.post(`${API_ADDRESS_URL}/add`, addressData, {
+      const response = await axios.post(`${ADDRESS_URL}/add`, addressData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -78,7 +80,7 @@ export const updateAddress = createAsyncThunk(
   async ({ id, addressData, token }) => {
     try {
       const response = await axios.put(
-        `${API_ADDRESS_URL}/edit/${id}`,
+        `${ADDRESS_URL}/edit/${id}`,
         addressData,
         {
           headers: {
@@ -101,7 +103,7 @@ export const deleteAddress = createAsyncThunk(
   "address/deleteAddress",
   async ({ id, token }) => {
     try {
-      await axios.delete(`${API_ADDRESS_URL}/delete/${id}`, {
+      await axios.delete(`${ADDRESS_URL}/delete/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
