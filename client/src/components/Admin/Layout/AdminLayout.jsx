@@ -128,7 +128,7 @@ const AdminLayout = () => {
             to="/admin/products"
             className="text-2xl font-bold cursor-pointer text-primary"
           >
-            {"Logo"}
+            Tokokita
           </Link>
           <div className="lg:flex items-center space-x-2 hidden">
             <span className="text-gray-500">/</span>
