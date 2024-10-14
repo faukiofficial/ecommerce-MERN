@@ -13,7 +13,6 @@ import { checkAuth } from "./store/auth-slice/authSlice";
 import ShopLayout from "./components/Shop/Layout/ShopLayout";
 import ShoppingHome from "./pages/Shop/Home";
 import Checkout from "./pages/Shop/Checkout";
-import LocationForm from "./pages/LocationForm";
 import EditProfile from "./pages/Shop/EditProfile";
 import Address from "./pages/Shop/Address";
 import StoreProfile from "./pages/Admin/StoreProfile";
@@ -59,7 +58,6 @@ function App() {
         <Route path="admin-profile" element={<EditProfile />} />
       </Route>
       <Route path="/auth" element={<Navigate to="/auth/login" />} />
-      <Route path="/location" element={<LocationForm/>} />
       <Route
         path="/auth"
         element={

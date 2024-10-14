@@ -1,13 +1,21 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Cookies from "js-cookie";
-import { getAllOrders } from "../../store/orderSlice/orderSlice"; // Path ke checkoutSlice Redux
+import {
+  getAllOrders,
+  updateOrderStatus,
+} from "../../store/orderSlice/orderSlice"; // Path ke checkoutSlice Redux
 import moment from "moment";
 import { MdNavigateNext, MdNavigateBefore } from "react-icons/md";
 import formatNumber from "../../components/helpers/formatNumber";
+import { IoIosClose } from "react-icons/io";
 
 const AllOrders = () => {
   const dispatch = useDispatch();
+
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showPaymentProof, setShowPaymentProof] = useState(false);
+  const [trackingCodes, setTrackingCodes] = useState({});
 
   // Mengambil state user orders dari redux store
   const {
@@ -46,6 +54,29 @@ const AllOrders = () => {
     const newLimit = parseInt(e.target.value, 10);
     setLimit(newLimit);
     setCurrentPage(1); // Reset ke halaman 1 saat limit berubah
+  };
+
+  // Fungsi untuk mengubah nilai tracking code per order
+  const handleTrackingCodeChange = (orderId, value) => {
+    setTrackingCodes({
+      ...trackingCodes,
+      [orderId]: value, // Update tracking code untuk orderId yang sesuai
+    });
+  };
+
+  // Fungsi untuk submit tracking code untuk order yang sesuai
+  const handleSubmitTrackingCode = (orderId) => {
+    const trackingCode = trackingCodes[orderId];
+    if (!trackingCode) return; // Cegah submit jika tracking code kosong
+
+    dispatch(
+      updateOrderStatus({
+        orderId,
+        newStatus: "ondelivery",
+        token,
+        trackingCode,
+      })
+    )
   };
 
   // Render loading spinner saat sedang mengambil data pesanan
@@ -91,8 +122,12 @@ const AllOrders = () => {
                     <div key={item._id} className="flex flex-col my-1">
                       <div className="flex items-start gap-2">
                         <img
-                          src={item.product.images[0]}
-                          alt={item.product.title}
+                          src={
+                            Array.isArray(item?.product?.images)
+                              ? item.product.images[0]
+                              : ""
+                          }
+                          alt={item?.product?.title || "Product Image"}
                           className="w-12 h-12 object-contain"
                         />
                         <div>
@@ -143,7 +178,7 @@ const AllOrders = () => {
                     {order.paymentStatus} | {order.status}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {order.paymentStatus === "unpaid" &&
+                    {order.paymentStatus === "unpaid" && order.status !== "cancelled" &&
                       "Waiting for payment . . ."}
                   </div>
                   <div className="text-sm text-gray-500">
@@ -156,46 +191,93 @@ const AllOrders = () => {
                   </div>
                   {order.paymentStatus === "paid" &&
                     order.status === "pending" && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-1">
                         <div
                           className="hover:text-green-600 underline text-green-500 cursor-pointer"
                           onClick={() => {
-                            // Lakukan aksi yang diinginkan
+                            setSelectedOrder(order);
+                            setShowPaymentProof(true);
                           }}
                         >
-                          Check Payment
+                          Check
                         </div>
                         <div
                           className="hover:text-primary-hover underline text-primary cursor-pointer"
                           onClick={() => {
-                            // Lakukan aksi yang diinginkan
+                            console.log("order id nihhhh", order._id);
+                            dispatch(
+                              updateOrderStatus({
+                                orderId: order._id,
+                                newStatus: "process",
+                                token,
+                              })
+                            )
                           }}
                         >
                           Process
+                        </div>
+                        <div
+                          className="hover:text-red-600 underline text-red-500 cursor-pointer"
+                          onClick={() => {
+                            dispatch(
+                              updateOrderStatus({
+                                orderId: order._id,
+                                newStatus: "cancelled",
+                                token,
+                              })
+                            )
+                          }}
+                        >
+                          Cancel
                         </div>
                       </div>
                     )}
                   {order.paymentStatus === "paid" &&
                     order.status === "process" && (
-                      <div
-                        className="hover:text-primary-hover underline text-primary cursor-pointer"
-                        onClick={() => {
-                          // Lakukan aksi yang diinginkan
-                        }}
-                      >
-                        Add Tracking Code
+                      <div className="flex flex-col items-start gap-1">
+                        <input
+                          type="text"
+                          value={trackingCodes[order._id] || ""}
+                          onChange={(e) =>
+                            handleTrackingCodeChange(order._id, e.target.value)
+                          }
+                          placeholder="Enter tracking code"
+                          className="border px-2 py-1"
+                        />
+                        <button
+                          className="text-primary hover:text-primary-hover underline"
+                          onClick={() => handleSubmitTrackingCode(order._id)}
+                        >
+                          Submit Tracking Code
+                        </button>
                       </div>
                     )}
                   {order.paymentStatus === "paid" &&
                     order.status === "ondelivery" && (
-                      <a
-                        className="hover:text-primary-hover underline text-primary cursor-pointer"
-                        href="https://rajaongkir.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Track Order
-                      </a>
+                      <div>
+                        <a
+                          className="hover:text-primary-hover underline text-primary cursor-pointer"
+                          href="https://rajaongkir.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Track Order
+                        </a>
+                        <div
+                          className="hover:text-green-600 underline text-green-500 cursor-pointer"
+                          onClick={() => {
+                            dispatch(
+                              updateOrderStatus({
+                                orderId: order._id,
+                                newStatus: "completed",
+                                token,
+                              })
+                            )
+                          }}
+                        >
+                          Complete
+                        </div>
+                      </div>
                     )}
                 </td>
               </tr>
@@ -240,6 +322,28 @@ const AllOrders = () => {
           </button>
         </div>
       </div>
+
+      {showPaymentProof && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="flex flex-col justify-between items-center bg-white mx-4 relative">
+            <div
+              className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1 absolute -top-2 -right-2"
+              onClick={() => {
+                setSelectedOrder(null);
+                setShowPaymentProof(false);
+              }}
+            >
+              <IoIosClose />
+            </div>
+
+            <img
+              src={selectedOrder?.paymentProof}
+              alt="no image"
+              className="w-50"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

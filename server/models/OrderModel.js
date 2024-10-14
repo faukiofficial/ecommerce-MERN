@@ -26,6 +26,7 @@ const orderSchema = new mongoose.Schema({
   selectedShippingCode: { type: String, },
   status: { type: String, enum: ['pending', 'process', 'ondelivery', 'completed', 'cancelled'], default: 'pending' },
   paymentStatus: { type: String, enum: ['unpaid', 'paid'], default: 'unpaid' },
+  paymentProof: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

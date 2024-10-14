@@ -12,6 +12,9 @@ const initialState = {
   isLoadingOrders: false, // Loading state for fetching orders
   errorMessage: "", // Error messages for both checkout and orders
   successMessage: "", // Success message for checkout
+  isUploadingProof: false,
+  proofUploadSuccess: false,
+  proofUploadError: null,
 };
 
 // Async Thunk for checking out selected items
@@ -85,6 +88,68 @@ export const getUserOrders = createAsyncThunk(
   }
 );
 
+// Async Thunk untuk mengunggah bukti transfer
+export const uploadPaymentProof = createAsyncThunk(
+  "/order/uploadPaymentProof",
+  async ({ orderId, paymentProof, token }) => {
+    try {
+      const formData = new FormData();
+      formData.append("orderId", orderId);
+      formData.append("paymentProof", paymentProof);
+      
+      const response = await axios.post(
+        "http://localhost:7500/api/order/upload-payment-proof",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.log("Error in uploadPaymentProof thunk", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to upload payment proof ddd"
+      );
+    }
+  }
+);
+
+// Async Thunk untuk mengubah status order
+export const updateOrderStatus = createAsyncThunk(
+  "/order/updateOrderStatus",
+  async ({ orderId, newStatus, token, trackingCode }) => {
+    try {
+      const payload = { newStatus };
+      if (newStatus === "ondelivery" && trackingCode) {
+        payload.trackingCode = trackingCode;
+      }
+
+      const response = await axios.put(
+        `http://localhost:7500/api/order/update-status/${orderId}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.log("Error di updateOrderStatus thunk", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to update order status"
+      );
+    }
+  }
+);
+
 const checkoutSlice = createSlice({
   name: "checkout",
   initialState,
@@ -138,6 +203,90 @@ const checkoutSlice = createSlice({
         state.isLoadingOrders = false;
         state.errorMessage =
           action.error.message || "Failed to get user orders.";
+      })
+      .addCase(uploadPaymentProof.pending, (state) => {
+        state.isUploadingProof = true;
+        state.proofUploadError = null;
+        state.proofUploadSuccess = false;
+      })
+      .addCase(uploadPaymentProof.fulfilled, (state, action) => {
+        state.isUploadingProof = false;
+        state.proofUploadSuccess = true;
+        const updatedOrder = action.payload.order;
+
+        if (updatedOrder) {
+          // Update di userOrders
+          const userOrderIndex = state.userOrders.findIndex(
+            (order) => order._id === updatedOrder._id
+          );
+          if (userOrderIndex !== -1) {
+            state.userOrders[userOrderIndex] = {
+              ...state.userOrders[userOrderIndex],
+              paymentProof: updatedOrder.paymentProof,
+              paymentStatus: updatedOrder.paymentStatus,
+              updatedAt: updatedOrder.updatedAt,
+            };
+          }
+
+          // Update di orders
+          const orderIndex = state.orders.findIndex(
+            (order) => order._id === updatedOrder._id
+          );
+          if (orderIndex !== -1) {
+            state.orders[orderIndex] = {
+              ...state.orders[orderIndex],
+              paymentProof: updatedOrder.paymentProof,
+              paymentStatus: updatedOrder.paymentStatus,
+              updatedAt: updatedOrder.updatedAt,
+            };
+          }
+        }
+      })
+      .addCase(uploadPaymentProof.rejected, (state, action) => {
+        state.isUploadingProof = false;
+        state.proofUploadError =
+          action.payload || "Failed to upload payment proof.";
+      })
+      .addCase(updateOrderStatus.pending, (state) => {
+        state.isUpdatingStatus = true;
+        state.updateStatusError = null;
+        state.updateStatusSuccess = false;
+      })
+      .addCase(updateOrderStatus.fulfilled, (state, action) => {
+        state.isUpdatingStatus = false;
+        state.updateStatusSuccess = true;
+        const updatedOrder = action.payload.order;
+
+        if (updatedOrder) {
+          // Update di userOrders
+          const userOrderIndex = state.userOrders.findIndex(
+            (order) => order._id === updatedOrder._id
+          );
+          if (userOrderIndex !== -1) {
+            state.userOrders[userOrderIndex] = {
+              ...state.userOrders[userOrderIndex],
+              status: updatedOrder.status,
+              updatedAt: updatedOrder.updatedAt,
+            };
+          }
+
+          // Update di orders
+          const orderIndex = state.orders.findIndex(
+            (order) => order._id === updatedOrder._id
+          );
+          if (orderIndex !== -1) {
+            state.orders[orderIndex] = {
+              ...state.orders[orderIndex],
+              status: updatedOrder.status,
+              updatedAt: updatedOrder.updatedAt,
+            };
+          }
+        }
+      })
+      .addCase(updateOrderStatus.rejected, (state, action) => {
+        state.isUpdatingStatus = false;
+        state.updateStatusError =
+          action.payload || "Failed to update order status.";
       });
   },
 });

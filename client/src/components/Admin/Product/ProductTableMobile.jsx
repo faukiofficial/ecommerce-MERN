@@ -1,8 +1,4 @@
 import "../../../styles/style.css";
-import { PiCarProfile } from "react-icons/pi";
-import { MdOutlineDone } from "react-icons/md";
-import { IoCloseSharp } from "react-icons/io5";
-import { SiDatabricks } from "react-icons/si";
 import { FaSortUp } from "react-icons/fa6";
 import { FaSortDown } from "react-icons/fa6";
 
@@ -103,8 +99,7 @@ const ProductTableMobile = ({
                 <div className="flex items-center justify-around w-full">
                   <p className="text-gray-700">
                     <span className="text-sm flex items-center gap-1">
-                      <SiDatabricks className="text-lg" />{" "}
-                      {formatNumber(product.stock)}
+                      Stock: {formatNumber(product.stock)}
                     </span>
                   </p>
                   <div className="border-l border-gray-300 h-6 mx-4"></div>
@@ -113,19 +108,6 @@ const ProductTableMobile = ({
                       Sold: {formatNumber(product.sold)}
                     </span>
                   </p>
-                  <div className="border-l border-gray-300 h-6 mx-4"></div>
-                  <div className="text-gray-700">
-                    <span className="text-sm relative">
-                      <PiCarProfile className="text-2xl" />
-                      <div className="absolute -top-1 -right-3">
-                        {product.deliveryAvailable ? (
-                          <MdOutlineDone className="text-green-400 text-lg" />
-                        ) : (
-                          <IoCloseSharp className="text-red-400 text-lg" />
-                        )}
-                      </div>
-                    </span>
-                  </div>
                 </div>
               </div>
               <div className="flex justify-end">

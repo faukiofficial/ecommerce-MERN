@@ -16,6 +16,7 @@ import { AiOutlineLoading } from "react-icons/ai";
 import { IoCartOutline } from "react-icons/io5";
 import { VscAccount } from "react-icons/vsc";
 import { FaAngleUp, FaAngleDown } from "react-icons/fa6";
+import { MdOutlineLocalShipping } from "react-icons/md";
 import { useEffect, useRef, useState } from "react";
 import Cookies from "js-cookie";
 import {
@@ -192,6 +193,25 @@ const ShopLayout = () => {
           label: "Address",
         },
       ],
+    },
+  ];
+
+  const navLinksMobile = [
+    {
+      to: "products",
+      icon: <AiOutlineProduct className="text-xl" />,
+    },
+    {
+      to: "my-orders",
+      icon: <AiOutlineShoppingCart className="text-xl" />,
+    },
+    {
+      to: "my-profile",
+      icon: <VscAccount className="text-xl" />,
+    },
+    {
+      to: "my-address",
+      icon: <MdOutlineLocalShipping className="text-xl" />,
     },
   ];
 
@@ -424,7 +444,7 @@ const ShopLayout = () => {
       </div>
       <header className="lg:hidden border-t bg-white shadow-b-sm px-6 fixed bottom-0 z-20 w-full">
         <nav className="flex items-center justify-around">
-          {navLinks.map(({ to, icon }) => (
+          {navLinksMobile.map(({ to, icon }) => (
             <NavLink
               key={to}
               to={to}

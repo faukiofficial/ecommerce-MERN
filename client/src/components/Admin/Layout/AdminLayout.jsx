@@ -1,4 +1,10 @@
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { SlLogout } from "react-icons/sl";
 import { AiOutlineProduct } from "react-icons/ai";
 import { IoBagAddOutline } from "react-icons/io5";
@@ -13,9 +19,9 @@ import { FaAngleUp, FaAngleDown } from "react-icons/fa6";
 const AdminLayout = () => {
   const location = useLocation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const { isLoading, user } = useSelector((state) => state.auth);
-  
 
   // Function to determine the active breadcrumb based on the current path
   const getBreadcrumb = () => {
@@ -71,6 +77,21 @@ const AdminLayout = () => {
     },
   ];
 
+  const navLinksMobile = [
+    {
+      to: "products",
+      icon: <AiOutlineProduct className="text-xl" />,
+    },
+    {
+      to: "add-product",
+      icon: <IoBagAddOutline className="text-xl" />,
+    },
+    {
+      to: "store-profile",
+      icon: <IoSettingsOutline className="text-xl" />,
+    },
+  ];
+
   const renderSubMenu = (subMenu) => {
     return subMenu.map((item) => (
       <NavLink
@@ -116,7 +137,10 @@ const AdminLayout = () => {
             <div className="text-lg text-gray-700">{getBreadcrumb()}</div>
           </div>
         </div>
-        <div className="flex items-center gap-1 cursor-pointer">
+        <div
+          className="flex items-center gap-1 cursor-pointer"
+          onClick={() => navigate("/admin/admin-profile")}
+        >
           <img
             src={user.profilePicture?.url || userAvatarLink}
             alt={user.fullName}
@@ -229,7 +253,7 @@ const AdminLayout = () => {
       </div>
       <header className="lg:hidden border-t bg-white shadow-b-sm px-6 fixed bottom-0 z-20 w-full">
         <nav className="flex items-center justify-around">
-          {navLinks.map(({ to, icon }) => (
+          {navLinksMobile.map(({ to, icon }) => (
             <NavLink
               key={to}
               to={to}

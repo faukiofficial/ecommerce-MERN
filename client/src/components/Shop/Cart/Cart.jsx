@@ -134,7 +134,7 @@ const Cart = ({
                               // Jika melebihi stok produk
                               if (numericValue > item.product.stock) {
                                 setStockMessage(
-                                  `You can order more than stock (${item.product.stock})`
+                                  `You can't order more than stock (${item.product.stock})`
                                 );
                                 setAlertShow(true);
                                 setInputValues({});
@@ -155,7 +155,7 @@ const Cart = ({
                         onClick={() => {
                           if (item.quantity === item.product.stock) {
                             setStockMessage(
-                              `You can order more than stock (${item.product.stock})`
+                              `You can't order more than stock (${item.product.stock})`
                             );
                             setAlertShow(true);
                           } else {

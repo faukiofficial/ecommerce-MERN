@@ -1,8 +1,4 @@
 import "../../../styles/style.css";
-import { PiCarProfile } from "react-icons/pi";
-import { MdOutlineDone } from "react-icons/md";
-import { IoCloseSharp } from "react-icons/io5";
-import { SiDatabricks } from "react-icons/si";
 import { FaSortUp } from "react-icons/fa6";
 import { FaSortDown } from "react-icons/fa6";
 import { MdAddShoppingCart } from "react-icons/md";
@@ -109,9 +105,6 @@ const ShoppingProduct = ({
                   <span className="text-[12px] border border-primary p-[1px] px-[2px]">
                     {product.category}
                   </span>
-                  <span className="text-[12px] p-[1px] px-[2px]">
-                    Sold: {formatToK(product.sold)}
-                  </span>
                 </div>
               </div>
               <div className="flex flex-col justify-between px-5 mb-4">
@@ -133,23 +126,15 @@ const ShoppingProduct = ({
                 </div>
                 <div className="border-t border-gray-300 my-4 w-full"></div>
                 <div className="flex items-center justify-around w-full text-sm">
-                  <p className="text-gray-700">
+                  <div className="text-gray-700">
                     <span className="text-sm flex items-center gap-[1px]">
-                      <SiDatabricks className="text-lg" />{" "}
-                      {formatToK(product.stock)}
+                      Stock: {formatToK(product.stock)}
                     </span>
-                  </p>
+                  </div>
                   <div className="border-l border-gray-300 h-6 mx-4"></div>
                   <div className="text-gray-700">
                     <span className="text-sm relative">
-                      <PiCarProfile className="text-2xl" />
-                      <div className="absolute -top-1 -right-3">
-                        {product.deliveryAvailable ? (
-                          <MdOutlineDone className="text-green-400 text-lg" />
-                        ) : (
-                          <IoCloseSharp className="text-red-400 text-lg" />
-                        )}
-                      </div>
+                    Sold: {formatToK(product.sold)}
                     </span>
                   </div>
                 </div>

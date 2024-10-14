@@ -91,7 +91,7 @@ const DetailProduct = () => {
   };
 
   return (
-    <div className="p-8 bg-white shadow-lg rounded-lg">
+    <div className="p-8 bg-white shadow-lg ">
       <div className="flex gap-10">
         {/* Images (maximum 5) */}
         <div>
@@ -163,7 +163,6 @@ const DetailProduct = () => {
                 </button>
                 <input
                   type="number"
-                  min="1"
                   max={product?.stock}
                   value={addToCartQuantity}
                   onChange={(e) => handleQuantityChange(e.target.value)}

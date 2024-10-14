@@ -1,6 +1,7 @@
 const Order = require("../models/OrderModel");
 const Product = require("../models/ProductModel");
 const Address = require("../models/AddressModel"); // Pastikan model Address diimpor
+const { imageUploadUtil } = require("../config/cloudinary");
 
 // Create an Order (Checkout)
 exports.createOrder = async (req, res) => {
@@ -59,17 +60,14 @@ exports.createOrder = async (req, res) => {
   }
 
   try {
-    // Validasi bahwa alamat ada dan milik pengguna
     const address = await Address.findOne({ _id: addressId, user: userId });
     if (!address) {
       console.log("Invalid address ID.");
       return res.status(400).json({ message: "Invalid address ID." });
     }
 
-    // Extract productIds dari items
     const productIds = items.map((item) => item._id);
 
-    // Fetch produk dari database untuk memastikan keberadaan
     const products = await Product.find({ _id: { $in: productIds } });
 
     if (products.length !== items.length) {
@@ -77,13 +75,11 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "Some products not found." });
     }
 
-    // Buat mapping productId ke produk
     const productMap = {};
     products.forEach((product) => {
       productMap[product._id.toString()] = product;
     });
 
-    // Menyusun orderItems
     const orderItems = [];
 
     for (const item of items) {
@@ -105,7 +101,6 @@ exports.createOrder = async (req, res) => {
           .json({ message: `Invalid quantity for product ID ${productId}.` });
       }
 
-      // Opsional: Cek ketersediaan stok
       if (productMap[productId].stock < quantity) {
         console.log(`Insufficient stock for product ID ${productId}.`);
         return res
@@ -147,6 +142,48 @@ exports.createOrder = async (req, res) => {
   }
 };
 
+exports.uploadPaymentProof = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const userId = req.user._id;
+
+    // Validasi input
+    if (!orderId) {
+      return res.status(400).json({ message: "Order ID is required." });
+    }
+
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ message: "Payment proof image is required." });
+    }
+
+    // Cari order berdasarkan orderId dan userId untuk keamanan
+    const order = await Order.findOne({ _id: orderId, userId });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found." });
+    }
+
+    // Upload gambar ke Cloudinary
+    const result = await imageUploadUtil(req.file.buffer);
+
+    // Perbarui order dengan URL gambar bukti pembayaran
+    order.paymentProof = result.secure_url;
+    order.paymentStatus = "paid"; // Update status pembayaran jika diperlukan
+
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Payment proof uploaded successfully.",
+      order,
+    });
+  } catch (error) {
+    console.error("Error in uploadPaymentProof controller:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Get all orders
 exports.getAllOrders = async (req, res) => {
   try {
@@ -169,15 +206,13 @@ exports.getAllOrders = async (req, res) => {
         .json({ success: false, message: "No orders found." });
     }
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        orders,
-        totalOrders,
-        totalPages: Math.ceil(totalOrders / limit),
-        currentPage: page,
-      });
+    res.status(200).json({
+      success: true,
+      orders,
+      totalOrders,
+      totalPages: Math.ceil(totalOrders / limit),
+      currentPage: page,
+    });
   } catch (error) {
     console.error("Error in getAllOrders controller:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -189,7 +224,6 @@ exports.getUserOrders = async (req, res) => {
   const userId = req.user._id;
 
   try {
-
     const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 1;
 
@@ -210,13 +244,82 @@ exports.getUserOrders = async (req, res) => {
         .json({ success: false, message: "No orders found for this user." });
     }
 
-    res.status(200).json({ success: true,
-      userOrders,
-      totalUserOrders,
-      totalPages: Math.ceil(totalUserOrders / limit),
-      currentPage: page, });
+    res
+      .status(200)
+      .json({
+        success: true,
+        userOrders,
+        totalUserOrders,
+        totalPages: Math.ceil(totalUserOrders / limit),
+        currentPage: page,
+      });
   } catch (error) {
     console.error("Error in getUserOrders controller:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update order status
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { newStatus, trackingCode } = req.body;
+
+    // Validasi input
+    if (!newStatus) {
+      return res.status(400).json({ message: "New status is required." });
+    }
+
+    const allowedStatuses = ['pending', 'process', 'ondelivery', 'completed', 'cancelled'];
+    if (!allowedStatuses.includes(newStatus)) {
+      return res.status(400).json({ message: "Invalid status value." });
+    }
+
+    // Cari order berdasarkan orderId
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found." });
+    }
+
+    // Validasi Transisi Status
+    const currentStatus = order.status;
+    const validTransitions = {
+      'pending': ['process', 'cancelled'],
+      'process': ['ondelivery', 'cancelled'],
+      'ondelivery': ['completed'],
+      'completed': [],
+      'cancelled': []
+    };
+
+    if (!validTransitions[currentStatus].includes(newStatus)) {
+      return res.status(400).json({
+        message: `Cannot change status from '${currentStatus}' to '${newStatus}'.`
+      });
+    }
+
+    // Jika status baru adalah 'ondelivery', pastikan trackingCode diberikan
+    if (newStatus === 'ondelivery') {
+      if (!trackingCode) {
+        return res.status(400).json({ message: "Tracking code is required when changing status to 'ondelivery'." });
+      }
+      order.trackingCode = trackingCode;
+    }
+
+    // Update status
+    order.status = newStatus;
+
+    // (Opsional) Tambahkan Log atau Tanggal Waktu Perubahan Status
+    // Misalnya: order.statusUpdatedAt = new Date();
+
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Order status updated successfully.",
+      order
+    });
+  } catch (error) {
+    console.error("Error in updateOrderStatus controller:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
