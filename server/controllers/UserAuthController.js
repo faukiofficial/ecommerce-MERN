@@ -98,7 +98,8 @@ exports.login = async (req, res) => {
     // Simpan token di HttpOnly cookie
     res.cookie("token", token, {
       httpOnly: false,
-      secure: false,
+      secure: true,
+      sameSite: 'None',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 hari
     });
 
